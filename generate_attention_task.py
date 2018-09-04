@@ -4,7 +4,7 @@ import random
 import os
 from os.path import join
 
-from config import OUTPUT_DIRECTORY, INSTRUCTION_TEXT, FONT_COLOR_INSTRUCTION, FONT_COLOR_TASK, FONT_SIZE, MARK_VERTICAL_PADDING, MARK_WIDTH, IMAGE_SIZE
+from config import OUTPUT_DIRECTORY, INSTRUCTION_TEXT, FONT_COLOR_INSTRUCTION, FONT_COLOR_TASK, FONT_SIZE_TASK, FONT_SIZE_INSTRUCTION, MARK_VERTICAL_PADDING, MARK_WIDTH, IMAGE_SIZE
 
 
 def generate_attention_task_image(i):
@@ -16,12 +16,12 @@ def generate_attention_task_image(i):
 
 def generate_text_for_task():
     full_array = []
-    for i in range(4):
+    for i in range(3):
         array = []
-        for i in range(5):
+        for i in range(4):
             marks_above, marks_below = get_random_marks()
 
-            letter = 'p' if random.choice([0, 1]) == 0 else 'd'
+            letter = 'd' if random.choice([0, 2]) == 0 else 'p'
 
             array.append({
                 'letter': letter,
@@ -38,6 +38,7 @@ def get_random_marks():
     marks_above = random.choice([0, 1, 2])
     marks_below = random.choice([0, 1, 2])
 
+    # it's not fully random, we don't want no marks at all
     if marks_above + marks_below == 0:
         return get_random_marks()
     else:
@@ -50,29 +51,31 @@ def draw_attention_task_image(lines):
     image = Image.new("RGBA", (fullSizeX, fullSizeY), (0, 0, 0))
     draw = ImageDraw.Draw(image)
 
-    inconsolata = ImageFont.truetype('font/Inconsolata-Regular.ttf', FONT_SIZE)
+    inconsolata_instruction = ImageFont.truetype('font/Inconsolata-Regular.ttf', FONT_SIZE_INSTRUCTION)
+    inconsolata = ImageFont.truetype('font/Inconsolata-Regular.ttf', FONT_SIZE_TASK)
 
     # draw instructions
-    (instruction_width, instruction_height) = ImageDraw.ImageDraw(image).textsize(text=INSTRUCTION_TEXT, font=inconsolata)
-    draw.text((fullSizeX/2 - instruction_width/2, (fullSizeY / 20)), INSTRUCTION_TEXT, FONT_COLOR_INSTRUCTION, font=inconsolata)
+    (instruction_width, instruction_height) = ImageDraw.ImageDraw(image).textsize(text=INSTRUCTION_TEXT, font=inconsolata_instruction)
+    draw.text((fullSizeX/2 - instruction_width/2, (fullSizeY / 30)), INSTRUCTION_TEXT, FONT_COLOR_INSTRUCTION, font=inconsolata_instruction)
 
     x_pos_start = (fullSizeX / 12)
-    y_pos = instruction_height
+    y_pos = instruction_height + (fullSizeY / 6)
 
     # draw attention task
     for line in lines:
         xPos = x_pos_start
-        y_pos += (fullSizeY / 5)
 
         for element in line:
+            print("drawing a {letter} with {marks_above} marks above and {marks_below} marks below".format(**element))
+
             # draw letter
             (letter_width, letter_height) = ImageDraw.ImageDraw(image).textsize(text=element['letter'], font=inconsolata)
             draw.text((xPos, y_pos), element['letter'], FONT_COLOR_TASK, font=inconsolata)
 
             # draw marks above letter
-            if element['marks_below'] == 1:
+            if element['marks_above'] == 1:
                 draw.line((xPos + (letter_width / 2), y_pos - (letter_height / 2)) + (xPos + (letter_width / 2), y_pos - (letter_height / 2) - MARK_VERTICAL_PADDING), fill=FONT_COLOR_TASK, width=MARK_WIDTH)
-            elif element['marks_below'] == 2:
+            elif element['marks_above'] == 2:
                 draw.line((xPos + (1/4 * letter_width), y_pos - (letter_height / 2)) + (xPos + (1/4 * letter_width), y_pos - (letter_height / 2) - MARK_VERTICAL_PADDING), fill=FONT_COLOR_TASK, width=MARK_WIDTH)
                 draw.line((xPos + (3/4 * letter_width), y_pos - (letter_height / 2)) + (xPos + (3/4 * letter_width), y_pos - (letter_height / 2) - MARK_VERTICAL_PADDING), fill=FONT_COLOR_TASK, width=MARK_WIDTH)
 
@@ -83,7 +86,9 @@ def draw_attention_task_image(lines):
                 draw.line((xPos + (1/4 * letter_width), y_pos + (1.5 * letter_height)) + (xPos + (1/4 * letter_width), y_pos + (1.5 * letter_height) + MARK_VERTICAL_PADDING), fill=FONT_COLOR_TASK, width=MARK_WIDTH)
                 draw.line((xPos + (3/4 * letter_width), y_pos + (1.5 * letter_height)) + (xPos + (3/4 * letter_width), y_pos + (1.5 * letter_height) + MARK_VERTICAL_PADDING), fill=FONT_COLOR_TASK, width=MARK_WIDTH)
 
-            xPos += (fullSizeX / 5)
+            xPos += 1.05 * (fullSizeX / 4)
+
+        y_pos += 1.1 * (fullSizeY / 4)
 
     return image
 
